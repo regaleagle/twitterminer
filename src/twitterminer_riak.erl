@@ -84,7 +84,7 @@ createRiakObj(Value, RiakPID) ->
 											_ ->
 												true
 										end end, Keys),
-	lists:map(fun(OldKey) -> riakc_pb_socket:delete(RiakPID, <<"tags">>, OldKey), OldKeys),
+	lists:map(fun(OldKey) -> riakc_pb_socket:delete(RiakPID, <<"tags">>, OldKey) end, OldKeys),
 	ok.
 
 
