@@ -23,7 +23,7 @@ start_link(RiakIP) ->
 %% ===================================================================
 
 init(RiakIP) ->
-    {ok, { {one_for_one, 5, 1000}, 
+    {ok, { {one_for_one, 10, 5000}, 
     	[{twitterminer_riak,
              {twitterminer_riak, start_link, [RiakIP]},
              permanent,
