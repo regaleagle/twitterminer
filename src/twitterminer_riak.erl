@@ -75,8 +75,16 @@ createRiakObj(Value, RiakPID) ->
 	Obj = riakc_obj:new(<<"tags">>,
         integer_to_binary(timeStamp()),
         term_to_binary(Value)),
-	riakc_pb_socket:put(RiakPID, Obj),
-	{ok, Keys} = riakc_pb_socket:list_keys(RiakPID, <<"tags">>),
+	MD1 = riakc_obj:get_update_metadata(Obj),
+	MD2 = riakc_obj:set_secondary_index(MD1, [{{integer_index, "timestamp"}, [timeStamp()]}]),
+	TagObj = riakc_obj:update_metadata(Obj, MD2),
+	riakc_pb_socket:put(RiakPID, TagObj),
+	{ok, {_,Keys,_,_}} = riakc_pb_socket:get_index_range(
+          RiakPID,
+          <<"tags">>, %% bucket name
+          {integer_index, "timestamp"}, %% index name
+          oldestTimeStamp(), oldTimeStamp() 
+        ),
 	Deletefrom = oldTimeStamp(),
 	OldKeys = lists:filter(fun(Key) -> case binary_to_integer(Key) of
 											IntKey when IntKey > Deletefrom ->
@@ -95,4 +103,8 @@ timeStamp() ->
 oldTimeStamp() ->
 	{Mega, Secs, Micro} = erlang:now(),
 	Mega*1000*1000*1000*1000 + ((Secs - 2400) * 1000 * 1000) + Micro.
+
+oldestTimeStamp() ->
+	{Mega, _, Micro} = erlang:now(),
+	Mega*1000*1000*1000*1000 + Micro.
 

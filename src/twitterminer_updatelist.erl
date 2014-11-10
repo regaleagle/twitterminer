@@ -41,11 +41,28 @@ handle_call(_Request, _From, State) ->
 %%potential for more efficiency if only the first and last are operated on, maybe using dict:fold. Maybe...
 %%replace list_keys with 2ndary index to aoid timeout and tombstone issue
 handle_cast(tick, RiakPID) ->
-	case riakc_pb_socket:list_keys(RiakPID, <<"tags">>) of
-		{ok, Keys} ->
+	case riakc_pb_socket:get_index_range(
+          RiakPID,
+          <<"tags">>, %% bucket name
+          {integer_index, "timestamp"}, %% index name
+          oldTimeStamp(), timeStamp() %% origin timestamp should eventually have some logic attached
+        ) of
+		{ok, {_,Keys,_,_}} ->
 			if 
 				length(Keys) < 20 ->
-					ok;
+					NewKeys = lists:reverse(lists:sort(Keys)),
+					Objects = lists:map(fun(Key) -> {ok, Obj} = riakc_pb_socket:get(RiakPID, <<"tags">>, Key), Obj end, NewKeys),
+					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), Tags = dict:fetch_keys(Value), sets:union([Alltags, sets:from_list(Tags)]) end, sets:new(), Objects),
+					TaglistVal = term_to_binary(sets:to_list(Tagset)),
+					case riakc_pb_socket:get(RiakPID, <<"taglistbucket">>, <<"taglist">>) of
+						{ok, OldTaglist} ->			
+							NewTaglist = riakc_obj:update_value(OldTaglist, TaglistVal);
+						{error,_} ->
+							NewTaglist = riakc_obj:new(<<"taglistbucket">>,
+									        <<"taglist">>,
+									        TaglistVal)
+					end,
+					riakc_pb_socket:put(RiakPID, NewTaglist);
 				true ->
 					{NewKeys,_} = lists:split(20, lists:reverse(lists:sort(Keys))),
 					Objects = lists:map(fun(Key) -> {ok, Obj} = riakc_pb_socket:get(RiakPID, <<"tags">>, Key), Obj end, NewKeys),
@@ -86,3 +103,10 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
+timeStamp() ->
+	{Mega, Secs, Micro} = erlang:now(),
+	Mega*1000*1000*1000*1000 + Secs * 1000 * 1000 + Micro.
+
+oldTimeStamp() ->
+	{Mega, Secs, Micro} = erlang:now(),
+	Mega*1000*1000*1000*1000 + ((Secs - 2400) * 1000 * 1000) + Micro.
