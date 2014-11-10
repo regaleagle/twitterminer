@@ -30,7 +30,7 @@ init([RiakIP]) ->
 	io:format("Starting riak conn update list"),
 	try riakc_pb_socket:start_link(RiakIP, 8087) of
     {ok, RiakPID} ->
-    	{ok, {RiakPID, RiakIP}}
+    	{ok, RiakPID}
 	catch
     	_ ->
       		exit("no_riak_connection")
@@ -39,9 +39,9 @@ init([RiakIP]) ->
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 %%potential for more efficiency if only the first and last are operated on, maybe using dict:fold. Maybe...
-handle_cast(tick, {RiakPID, RiakIP}) ->
-	{ok, Keys} = riakc_pb_socket:list_keys(RiakPID, <<"tags">>),
-	case riakc_pb_socket:list_keys(RiakPID, <<"tags">>) of
+%%replace list_keys with 2ndary index to aoid timeout and tombstone issue
+handle_cast(tick, RiakPID) ->
+	try riakc_pb_socket:list_keys(RiakPID, <<"tags">>) of
 		{ok, Keys} ->
 			if 
 				length(Keys) < 20 ->
@@ -61,19 +61,18 @@ handle_cast(tick, {RiakPID, RiakIP}) ->
 					end,
 					riakc_pb_socket:put(RiakPID, NewTaglist)
 			end,
-			{noreply, {RiakPID, RiakIP}};
-		{error,<<"timeout">>} ->
+			{noreply, RiakPID};
+	catch
+		{error,notfound} ->
+			{noreply, RiakPID};
+		{error, _} ->
 			io:format("list keys timed out"),
-			riakc_pb_socket:stop(RiakPID),
-			try riakc_pb_socket:start_link(RiakIP, 8087) of
-			    {ok, NewRiakPID} ->
-			    	{noreply, {NewRiakPID, RiakIP}};
-			catch
-		    	_ ->
-		      		exit("no_riak_connection")
-		  	end
-
+		    exit("list keys timed out")
+	after 3000
+			io:format("timed out after 3000"),			
+	  		exit("timed out after 3000")
 	end;
+
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
