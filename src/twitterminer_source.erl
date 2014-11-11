@@ -55,9 +55,6 @@ code_change(_OldVsn, State, _Extra) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-start_link() ->
-  Pid = start(),
-  {ok, Pid}.
 
 keyfind(Key, L) ->
   {Key, V} = lists:keyfind(Key, 1, L),
