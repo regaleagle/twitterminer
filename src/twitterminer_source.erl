@@ -1,10 +1,59 @@
 -module(twitterminer_source).
+-behaviour(gen_server).
+-define(SERVER, ?MODULE).
+
+%% ------------------------------------------------------------------
+%% API Function Exports
+%% ------------------------------------------------------------------
 
 -export([start_link/0, twitter_print_pipeline/2, twitter_producer/2, get_account_keys/1, stop_miner/0]).
 
 
 -record(account_keys, {api_key, api_secret,
                        access_token, access_token_secret}).
+
+%% ------------------------------------------------------------------
+%% gen_server Function Exports
+%% ------------------------------------------------------------------
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+         terminate/2, code_change/3]).
+
+%% ------------------------------------------------------------------
+%% API Function Definitions
+%% ------------------------------------------------------------------
+
+start_link() ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+%% ------------------------------------------------------------------
+%% gen_server Function Definitions
+%% ------------------------------------------------------------------
+
+init([]) ->
+  Pid = start(),
+  {ok, Pid}.
+
+
+handle_call(_Request, _From, State) ->
+    {reply, ok, State}.
+
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%% ------------------------------------------------------------------
+%% gen_server Function Definitions
+%% ------------------------------------------------------------------
 
 start_link() ->
   Pid = start(),
@@ -52,7 +101,8 @@ start() ->
 
   Res = twitterminer_pipeline:join(P),
   T ! cancel,
-  Res.
+  Res,
+  exit(completed_restart_please).
 
 stop_miner() ->
   linktoterminate ! cancel.
