@@ -33,7 +33,7 @@ handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
 handle_cast({hashtags, Tags, Tweet}, State) ->
-      [gen_server:cast(twitterminer_riak, {store, Tag, Tags, Tweet}) || Tag <- Tags],
+    [gen_server:cast(twitterminer_riak, {store, unicode:characters_to_binary([string:to_lower(X) || <<X/utf8>> <= Tag]), Tags, Tweet}) || Tag <- Tags],
     {noreply, State};
 
 handle_cast(_Msg, State) ->
