@@ -97,7 +97,7 @@ createRiakObj(Value, RiakPID) ->
 			ok;
 		{timeout, Reason} -> exit({timeout, Reason});
 		{error, Reason} -> exit(Reason)
-	end
+	end.
 
 
 timeStamp() ->
