@@ -50,7 +50,7 @@ handle_cast({store, Tag, Cotags, Tweet}, {RiakPID, Store}) ->
     {noreply, {RiakPID, NewStore}};
 
 handle_cast(tick, {RiakPID, Store}) ->
-	spawn(fun() -> createRiakObj(Store, RiakPID) end),
+	spawn_link(fun() -> createRiakObj(Store, RiakPID) end),
     {noreply, {RiakPID, dict:new()}};
 
 handle_cast(_Msg, State) ->
@@ -79,21 +79,25 @@ createRiakObj(Value, RiakPID) ->
 	MD2 = riakc_obj:set_secondary_index(MD1, [{{integer_index, "timestamp"}, [timeStamp()]}]),
 	TagObj = riakc_obj:update_metadata(Obj, MD2),
 	riakc_pb_socket:put(RiakPID, TagObj),
-	{ok, {_,Keys,_,_}} = riakc_pb_socket:get_index_range(
-          RiakPID,
-          <<"tags">>, %% bucket name
-          {integer_index, "timestamp"}, %% index name
-          oldestTimeStamp(), oldTimeStamp() 
-        ),
-	Deletefrom = oldTimeStamp(),
-	OldKeys = lists:filter(fun(Key) -> case binary_to_integer(Key) of
-											IntKey when IntKey > Deletefrom ->
-												false;
-											_ ->
-												true
-										end end, Keys),
-	lists:map(fun(OldKey) -> riakc_pb_socket:delete(RiakPID, <<"tags">>, OldKey) end, OldKeys),
-	ok.
+	case riakc_pb_socket:get_index_range(
+	          RiakPID,
+	          <<"tags">>, %% bucket name
+	          {integer_index, "timestamp"}, %% index name
+	          oldestTimeStamp(), oldTimeStamp() 
+	        ) of
+		{ok, {_,Keys,_,_}} ->
+			Deletefrom = oldTimeStamp(),
+			OldKeys = lists:filter(fun(Key) -> case binary_to_integer(Key) of
+													IntKey when IntKey > Deletefrom ->
+														false;
+													_ ->
+														true
+												end end, Keys),
+			lists:map(fun(OldKey) -> riakc_pb_socket:delete(RiakPID, <<"tags">>, OldKey) end, OldKeys),
+			ok;
+		{timeout, Reason} -> exit({timeout, Reason});
+		{error, Reason} -> exit(Reason)
+	end
 
 
 timeStamp() ->

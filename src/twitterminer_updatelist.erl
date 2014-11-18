@@ -79,11 +79,13 @@ handle_cast(tick, RiakPID) ->
 					riakc_pb_socket:put(RiakPID, NewTaglist)
 			end,
 			{noreply, RiakPID};
+		{timeout, Reason} ->
+			io:format("Timeout of secondary index search"),
+			exit({timeout, Reason});
 		{error,notfound} ->
 			{noreply, RiakPID};
-		{error, _} ->
-			io:format("list keys timed out"),
-		    exit("list keys timed out")
+		{error, Reason} ->
+		    exit(Reason)
 	end;
 
 
