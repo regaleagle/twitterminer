@@ -26,6 +26,7 @@ start_link(RiakIP) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
+%% init the server. Opens a socket to riak and stores the Pid in the state
 init([RiakIP]) ->
 	io:format("Starting riak conn update list"),
 	try riakc_pb_socket:start_link(RiakIP, 8087) of
@@ -38,8 +39,13 @@ init([RiakIP]) ->
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
+
 %%potential for more efficiency if only the first and last are operated on, maybe using dict:fold. Maybe...
-%%replace list_keys with 2ndary index to aoid timeout and tombstone issue
+
+%% Functionality: When the atom tick is recieved from the tickloop, calls 20 minutes of 
+%% data from riak and runs a map then a fold function to reduce this down to a 
+%% single list of available tags
+
 handle_cast(tick, RiakPID) ->
 	case riakc_pb_socket:get_index_range(
           RiakPID,
