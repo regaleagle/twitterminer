@@ -45,7 +45,7 @@
 
     Run the Erlang shell from the repo's toplevel directory with additional library path and configuration flags
 
-        $ erl -pa deps/*/ebin -pa ebin -config twitterminer
+        $ erl -pa deps/*/ebin -pa ebin -config twitterminer -sname twitterminer -setcookie tagwars
 
     Start all needed Erlang applications in the shell
 

@@ -161,7 +161,7 @@ put_to_riak([H|T], RiakPid) ->
   put_to_riak(T, RiakPid).
 
 delete(DeleteTag, RiakPID) ->
-  riakc_pb_socket:delete(RiakPID, <<"tags">>, DeleteTag).
+  riakc_pb_socket:delete(RiakPID, <<"formattedtweets">>, DeleteTag).
   
 
 timeStamp() ->
@@ -171,3 +171,6 @@ timeStamp() ->
 oldTimeStamp() ->
   {Mega, Secs, Micro} = erlang:now(),
   Mega*1000*1000*1000*1000 + ((Secs - 2400) * 1000 * 1000) + Micro.
+
+
+  
