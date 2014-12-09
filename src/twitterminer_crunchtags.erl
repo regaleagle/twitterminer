@@ -27,7 +27,7 @@ start_link(RiakIP) ->
 %% ------------------------------------------------------------------
 
 init([RiakIP]) ->
-	io:format("Starting riak conn crunch tags"),
+	io:format("Starting crunch tags"),
 	try riakc_pb_socket:start_link(RiakIP, 8087) of
     {ok, RiakPID} ->
     	{ok, {RiakPID,[]}}

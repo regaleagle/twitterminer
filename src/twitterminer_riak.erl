@@ -43,9 +43,9 @@ handle_call(_Request, _From, State) ->
 handle_cast({store, Tag, Cotags, Tweet}, {RiakPID, Store}) ->
 	case dict:find(Tag, Store) of
 		error ->
-			NewStore = dict:store(Tag, {1, sets:from_list(Cotags),sets:add_element(Tweet, sets:new())}, Store);
+			NewStore = dict:store(Tag, {1, gb_sets:from_list(Cotags),gb_sets:add_element(Tweet, gb_sets:new())}, Store);
 		{ok, {N, OldCotags, OldTweets}} ->
-			NewStore = dict:store(Tag, {N+1, sets:union(OldCotags, sets:from_list(Cotags)),sets:add_element(Tweet, OldTweets)}, Store)
+			NewStore = dict:store(Tag, {N+1, gb_sets:union(OldCotags, gb_sets:from_list(Cotags)),gb_sets:add_element(Tweet, OldTweets)}, Store)
 	end,
     {noreply, {RiakPID, NewStore}};
 
