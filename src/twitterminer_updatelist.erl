@@ -58,8 +58,8 @@ handle_cast(tick, RiakPID) ->
 				length(Keys) < 20 ->
 					NewKeys = lists:reverse(lists:sort(Keys)),
 					Objects = lists:map(fun(Key) -> {ok, Obj} = riakc_pb_socket:get(RiakPID, <<"tags">>, Key), Obj end, NewKeys),
-					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), Tags = dict:fetch_keys(Value), sets:union([Alltags, sets:from_list(Tags)]) end, sets:new(), Objects),
-					TaglistVal = term_to_binary(sets:to_list(Tagset)),
+					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), Tags = dict:fetch_keys(Value), gb_sets:union([Alltags, gb_sets:from_list(Tags)]) end, gb_sets:new(), Objects),
+					TaglistVal = term_to_binary(gb_sets:to_list(Tagset)),
 					case riakc_pb_socket:get(RiakPID, <<"taglistbucket">>, <<"taglist">>) of
 						{ok, OldTaglist} ->			
 							NewTaglist = riakc_obj:update_value(OldTaglist, TaglistVal);
@@ -72,8 +72,8 @@ handle_cast(tick, RiakPID) ->
 				true ->
 					{NewKeys,_} = lists:split(20, lists:reverse(lists:sort(Keys))),
 					Objects = lists:map(fun(Key) -> {ok, Obj} = riakc_pb_socket:get(RiakPID, <<"tags">>, Key), Obj end, NewKeys),
-					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), Tags = dict:fetch_keys(Value), sets:union([Alltags, sets:from_list(Tags)]) end, sets:new(), Objects),
-					TaglistVal = term_to_binary(sets:to_list(Tagset)),
+					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), Tags = dict:fetch_keys(Value), gb_sets:union([Alltags, gb_sets:from_list(Tags)]) end, gb_sets:new(), Objects),
+					TaglistVal = term_to_binary(gb_sets:to_list(Tagset)),
 					case riakc_pb_socket:get(RiakPID, <<"taglistbucket">>, <<"taglist">>) of
 						{ok, OldTaglist} ->			
 							NewTaglist = riakc_obj:update_value(OldTaglist, TaglistVal);
