@@ -93,16 +93,18 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 
 get_dicts(AllKeys, RiakPID) when length(AllKeys) >= 20 ->
-  {NewKeys,_} = lists:split(20, AllKeys),
+  {NKeys,_} = lists:split(20, AllKeys),
+  NewKeys = lists:reverse(NKeys),
   Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, NewKeys),
   lists:map(fun get_value/1, Objects);
   
 get_dicts(AllKeys, RiakPID) when (length(AllKeys) >= 2) and (length(AllKeys) rem 2 =:= 0) ->
-  Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, AllKeys),
+  NewKeys = lists:reverse(AllKeys),
+  Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, NewKeys),
   lists:map(fun get_value/1, Objects);
 
 get_dicts(AllKeys, RiakPID) when length(AllKeys) >= 2 ->
-  [_|NewKeys] = AllKeys,
+  [_|NewKeys] = list:reverse(AllKeys),
   Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, NewKeys),
   lists:map(fun get_value/1, Objects);
 
