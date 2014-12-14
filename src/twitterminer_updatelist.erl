@@ -113,8 +113,8 @@ code_change(_OldVsn, State, _Extra) ->
 
 timeStamp() ->
 	{Mega, Secs, _} = erlang:now(),
-	Mega*1000*1000*1000*1000 + Secs * 1000 * 1000.
+	Mega*1000*1000 + Secs.
 
 oldTimeStamp() ->
 	{Mega, Secs, _} = erlang:now(),
-	Mega*1000*1000*1000*1000 + ((Secs - 2400) * 1000 * 1000).
+	Mega*1000*1000 + (Secs - 2400).
