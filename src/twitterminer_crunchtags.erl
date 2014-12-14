@@ -56,7 +56,7 @@ handle_cast(tick, {RiakPID, OldTags}) ->
             oldTimeStamp(), timeStamp() %% origin timestamp should eventually have some logic attached
           ) of
     {ok, {_,TempKeys,_,_}} ->
-      Keys = lists:sort(TempKeys),
+      Keys = lists:reverse(lists:sort(TempKeys)),
       Keys;
     Reason1 -> exit(Reason1)
   end,
