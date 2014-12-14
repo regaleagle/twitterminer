@@ -104,7 +104,7 @@ get_dicts(AllKeys, RiakPID) when (length(AllKeys) >= 2) and (length(AllKeys) rem
   lists:map(fun get_value/1, Objects);
 
 get_dicts(AllKeys, RiakPID) when length(AllKeys) >= 2 ->
-  [_|NewKeys] = list:reverse(AllKeys),
+  [_|NewKeys] = lists:reverse(AllKeys),
   Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, NewKeys),
   lists:map(fun get_value/1, Objects);
 
