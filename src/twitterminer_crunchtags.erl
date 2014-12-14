@@ -56,7 +56,7 @@ handle_cast(tick, {RiakPID, OldTags}) ->
             oldTimeStamp(), timeStamp() %% origin timestamp should eventually have some logic attached
           ) of
     {ok, {_,TempKeys,_,_}} ->
-      Keys = lists:reverse(lists:sort(TempKeys)),
+      Keys = lists:sort(TempKeys),
       Keys;
     Reason1 -> exit(Reason1)
   end,
@@ -165,12 +165,12 @@ delete(DeleteTag, RiakPID) ->
   
 
 timeStamp() ->
-  {Mega, Secs, Micro} = erlang:now(),
-  Mega*1000*1000*1000*1000 + Secs * 1000 * 1000 + Micro.
+  {Mega, Secs, _} = erlang:now(),
+  Mega*1000*1000*1000*1000 + Secs * 1000 * 1000.
 
 oldTimeStamp() ->
-  {Mega, Secs, Micro} = erlang:now(),
-  Mega*1000*1000*1000*1000 + ((Secs - 2400) * 1000 * 1000) + Micro.
+  {Mega, Secs, _} = erlang:now(),
+  Mega*1000*1000*1000*1000 + ((Secs - 2400) * 1000 * 1000).
 
 
   
