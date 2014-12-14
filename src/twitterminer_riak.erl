@@ -102,13 +102,13 @@ createRiakObj(Value, RiakPID) ->
 
 timeStamp() ->
 	{Mega, Secs, Micro} = erlang:now(),
-	Mega*1000*1000*1000*1000 + Secs * 1000 * 1000 + Micro.
+	Mega*1000*1000 + Secs.
 
 oldTimeStamp() ->
 	{Mega, Secs, Micro} = erlang:now(),
-	Mega*1000*1000*1000*1000 + ((Secs - 2400) * 1000 * 1000) + Micro.
+	Mega*1000*1000 + (Secs - 2400).
 
 oldestTimeStamp() ->
-	{Mega, _, Micro} = erlang:now(),
-	Mega*1000*1000*1000*1000 + Micro.
+	{Mega, _, _} = erlang:now(),
+	Mega*1000*1000.
 
