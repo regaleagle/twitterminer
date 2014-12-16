@@ -45,7 +45,7 @@
 
     Run the Erlang shell from the repo's toplevel directory with additional library path and configuration flags- NB: The config will be different depending on the server you deploy on! options are: `config/picard`, `config/greedo`, `config/bobafett`, `config/garak`, `config/amazon`
 
-        $ erl -pa deps/*/ebin -pa ebin -config config/picard -sname twitterminer -setcookie tagwars
+        $ erl -pa deps/*/ebin -pa ebin -config config/picard -name twitterminer -setcookie tagwars
 
     Start all needed Erlang applications in the shell
 
