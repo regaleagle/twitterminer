@@ -15,6 +15,7 @@
 start_link() ->
   Pid = spawn_link(fun() -> start() end),
   global:register_name(twitterminer_source, Pid),
+  io:format("miner started"),
   {ok, Pid}.
 
 
