@@ -278,4 +278,4 @@ pop_size(N, _L, <<"\r\n",Rest/binary>>) -> {size, N, Rest}.
 send_on_tags(Tags, Tweet) ->
   [gen_server:cast(twitterminer_riak, 
     {store, unicode:characters_to_binary([string:to_lower(X) || <<X/utf8>> <= Tag]), 
-    Tags, Tweet}) || Tag <- Tags],.
+    Tags, Tweet}) || Tag <- Tags].
