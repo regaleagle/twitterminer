@@ -27,7 +27,6 @@ start_link(RiakIP) ->
 %% ------------------------------------------------------------------
 
 init([RiakIP]) ->
-	io:format("Starting riak conn ~s~n", [RiakIP]),
 	try riakc_pb_socket:start_link(RiakIP, 8087) of
     	{ok, RiakPID} ->
     		{ok, {RiakPID, dict:new()}}
