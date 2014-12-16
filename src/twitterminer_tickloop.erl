@@ -16,6 +16,7 @@ start() ->
 
 tickLoop() ->
 	timer:sleep(30000),
+	io:format("now ticking"),
 	gen_server:cast(twitterminer_riak, tick),
 	timer:sleep(15000),
 	gen_server:cast(twitterminer_crunchtags, tick),

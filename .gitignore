@@ -1,3 +1,4 @@
 twitter.config
 /deps
 /ebin
+/.rebar
