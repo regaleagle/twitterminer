@@ -1,6 +1,4 @@
 -module(twitterminer_source).
--behaviour(gen_server).
--define(SERVER, ?MODULE).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -12,48 +10,12 @@
 -record(account_keys, {api_key, api_secret,
                        access_token, access_token_secret}).
 
-%% ------------------------------------------------------------------
-%% gen_server Function Exports
-%% ------------------------------------------------------------------
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
-
-%% ------------------------------------------------------------------
-%% API Function Definitions
-%% ------------------------------------------------------------------
 
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
-
-%% ------------------------------------------------------------------
-%% gen_server Function Definitions
-%% ------------------------------------------------------------------
-
-init([]) ->
   Pid = spawn_link(fun() -> start() end),
+  global:register_name(twitterminer_source, Pid),
   {ok, Pid}.
-
-
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
-
-handle_cast(_Msg, State) ->
-    {noreply, State}.
-
-
-handle_info(_Info, State) ->
-    {noreply, State}.
-
-terminate(_Reason, _State) ->
-    ok.
-
-code_change(_OldVsn, State, _Extra) ->
-    {ok, State}.
-
-%% ------------------------------------------------------------------
-%% gen_server Function Definitions
-%% ------------------------------------------------------------------
 
 
 keyfind(Key, L) ->
@@ -228,7 +190,7 @@ parseT(L, FullTweet) ->
         not_found -> parseT(L, [], <<"">>)
   end.
 
-parseT([], Tags, Tweet) -> gen_server:cast(twitterminer_tweets, {hashtags, Tags, Tweet});
+parseT([], Tags, Tweet) ->  spawn_link(fun() -> send_on_tags(Tags, Tweet) end);
 parseT([H|T], Tags, Tweet) -> 
   {[{_,Tag},{_,_}]} = H,
   parseT(T, [Tag|Tags], Tweet).
@@ -312,3 +274,8 @@ pop_size(_N, L, <<"\r">>) -> {more, L+2};
 pop_size(N, L, <<A,Rest/binary>>) when A >= $0, A =< $9 ->
   pop_size(N * 10 + (A - $0), L+1, Rest);
 pop_size(N, _L, <<"\r\n",Rest/binary>>) -> {size, N, Rest}.
+
+send_on_tags(Tags, Tweet) ->
+  [gen_server:cast(twitterminer_riak, 
+    {store, unicode:characters_to_binary([string:to_lower(X) || <<X/utf8>> <= Tag]), 
+    Tags, Tweet}) || Tag <- Tags].

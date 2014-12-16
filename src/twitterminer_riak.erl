@@ -20,7 +20,7 @@
 %% ------------------------------------------------------------------
 
 start_link(RiakIP) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, RiakIP, []).
+    gen_server:start_link({global, ?SERVER}, ?MODULE, RiakIP, []).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions

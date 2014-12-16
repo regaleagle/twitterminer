@@ -16,13 +16,14 @@
 %% ===================================================================
 
 start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+    supervisor:start_link({global, ?MODULE}, ?MODULE, []).
 
 %% ===================================================================
 %% Supervisor callbacks
 %% ===================================================================
 
 init([]) ->
+    {ok, Server} = application:get_env(server),
     {ok, { {one_for_one, 5, 1000}, 
     	[{twitterminer_tweets,
             {twitterminer_tweets, start_link, []},
@@ -31,7 +32,7 @@ init([]) ->
             worker,
             [twitterminer_tweets]},
         {twitterminer_riaksup,
-            {twitterminer_riaksup, start_link, ["picard.skip.chalmers.se"]},  % A = Get list of connections from refServer
+            {twitterminer_riaksup, start_link, [Server]},  % A = Get list of connections from refServer
             permanent,
             5000, 
             supervisor,

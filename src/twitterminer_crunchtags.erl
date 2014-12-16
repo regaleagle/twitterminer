@@ -20,7 +20,7 @@
 %% ------------------------------------------------------------------
 
 start_link(RiakIP) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, RiakIP, []).
+    gen_server:start_link({global, ?SERVER}, ?MODULE, RiakIP, []).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -93,18 +93,16 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 
 get_dicts(AllKeys, RiakPID) when length(AllKeys) >= 20 ->
-  {NKeys,_} = lists:split(20, AllKeys),
-  NewKeys = lists:reverse(NKeys),
+  {NewKeys,_} = lists:split(20, AllKeys),
   Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, NewKeys),
   lists:map(fun get_value/1, Objects);
   
 get_dicts(AllKeys, RiakPID) when (length(AllKeys) >= 2) and (length(AllKeys) rem 2 =:= 0) ->
-  NewKeys = lists:reverse(AllKeys),
-  Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, NewKeys),
+  Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, AllKeys),
   lists:map(fun get_value/1, Objects);
 
 get_dicts(AllKeys, RiakPID) when length(AllKeys) >= 2 ->
-  [_|NewKeys] = lists:reverse(AllKeys),
+  [_|NewKeys] = AllKeys,
   Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, NewKeys),
   lists:map(fun get_value/1, Objects);
 

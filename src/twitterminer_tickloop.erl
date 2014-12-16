@@ -10,6 +10,7 @@
 start() ->
 	io:format("Starting tickloop"),
 	Pid = spawn_link(fun() -> tickLoop() end),
+	global:register_name(twitterminer_tickloop, Pid),
 	io:format("continuing tickloop"),
 	{ok, Pid}.
 

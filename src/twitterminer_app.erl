@@ -9,7 +9,9 @@
 %% Application callbacks
 %% ===================================================================
 
-start(_StartType, _StartArgs) ->
+start(normal, []) ->
+    twitterminer_sup:start_link();
+start({takeover, _OtherNode}, []) ->
     twitterminer_sup:start_link().
 
 stop(_State) ->

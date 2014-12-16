@@ -14,7 +14,7 @@
 %% ===================================================================
 
 start_link(RiakIP) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [RiakIP]).
+    supervisor:start_link({global, ?MODULE}, ?MODULE, [RiakIP]).
 
 %% ===================================================================
 %% Supervisor callbacks

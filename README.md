@@ -43,9 +43,9 @@
 
 1.  Run the example
 
-    Run the Erlang shell from the repo's toplevel directory with additional library path and configuration flags
+    Run the Erlang shell from the repo's toplevel directory with additional library path and configuration flags- NB: The config will be different depending on the server you deploy on! options are: `config/picard`, `config/greedo`, `config/bobafett`, `config/garak`, `config/amazon`
 
-        $ erl -pa deps/*/ebin -pa ebin -config twitterminer -sname twitterminer -setcookie tagwars
+        $ erl -pa deps/*/ebin -pa ebin -config config/picard -sname twitterminer -setcookie tagwars
 
     Start all needed Erlang applications in the shell
 
@@ -59,7 +59,7 @@
 
 ### Functionality
 
-Recieves a stream of tweets from Twitters public stream API, parses that data, to pull tag and tweet information, tracks frequency of tag use by minute and, once a minute, puts the distribution data to riak. The 
+Recieves a stream of tweets from Twitters public stream API, parses that data, to pull tag and tweet information, tracks frequency of tag use by minute and, once a minute, puts the distribution data to riak. It also processes the list of available tags and the current tag distribution data based on the available realtime data (fudged to a 120:1 ratio to account for sparse data and offset by 20 minutes for best response times when accounting for same 120:1 ratio) 
 
 ### Dependencies
 
