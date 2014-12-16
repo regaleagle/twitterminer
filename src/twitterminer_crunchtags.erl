@@ -145,7 +145,6 @@ get_dist(Tag, TagDict) ->
 
 loopThrough([], L, Cotags) -> {L, gb_sets:to_list(Cotags)};
 loopThrough(Tagset, L, OldCotags) ->
-  io:format("loop through tag"),
   {NewKeys,OldKeys} = lists:split(2, Tagset),
   [{Num, Cotags, Tweets}, {Num2, Cotags2, Tweets2}] = NewKeys,
   L2 = [{[{<<"numtags">>, Num + Num2}, {<<"tweets">>, gb_sets:to_list(gb_sets:union([Tweets, Tweets2]))}]}|L],

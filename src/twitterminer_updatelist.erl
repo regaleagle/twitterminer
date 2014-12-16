@@ -47,7 +47,6 @@ handle_call(_Request, _From, State) ->
 %% single list of available tags
 
 handle_cast(tick, RiakPID) ->
-	io:format("update list got tags"),
 	case riakc_pb_socket:get_index_range(
           RiakPID,
           <<"tags">>, %% bucket name
