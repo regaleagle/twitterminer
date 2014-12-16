@@ -30,6 +30,7 @@ init([RiakIP]) ->
 	io:format("Starting crunch tags"),
 	try riakc_pb_socket:start_link(RiakIP, 8087) of
     {ok, RiakPID} ->
+    io:format("~s~n", [RiakPID])
     	{ok, {RiakPID,[]}}
 	
 	catch
