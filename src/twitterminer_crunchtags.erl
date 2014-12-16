@@ -44,7 +44,6 @@ handle_call(_Request, _From, State) ->
 %% Pseudo code for twitterminer_crunchtags. Do map and reduce on a continuous timed loop on data that twitterminer_updatelist has gathered. 	
 %% -receive signal (or "tick") in a handle_cast function (look at the existing modules)
 handle_cast(tick, {RiakPID, OldTags}) ->
-  io:format("crunch tags got tick"),
   ListOfTags = case riakc_pb_socket:get(RiakPID, <<"taglistbucket">>, <<"taglist">>) of
     {ok, List} -> 
         FinalTaglist = binary_to_term(riakc_obj:get_value(List)),  

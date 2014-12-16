@@ -40,7 +40,6 @@ handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
 handle_cast({store, Tag, Cotags, Tweet}, {RiakPID, Store}) ->
-	io:format("riak server got store"),
 	case dict:find(Tag, Store) of
 		error ->
 			NewStore = dict:store(Tag, {1, gb_sets:from_list(Cotags),gb_sets:add_element(Tweet, gb_sets:new())}, Store);
