@@ -1,3 +1,10 @@
+%% ------------------------------------------------------------------
+%% twitterminer_sup is an OTP supervisor that sits at the top of the supervisor tree. 
+%% It starts a number of permanent processes in its init stage including 
+%% another supervisor and supervises them. 
+%% These processes are registered and should never die (i.e. will be restarted). 
+%% ------------------------------------------------------------------
+
 -module(twitterminer_sup).
 
 -behaviour(supervisor).
@@ -25,14 +32,8 @@ start_link() ->
 init([]) ->
     {ok, Server} = application:get_env(server),
     {ok, { {one_for_one, 5, 1000}, 
-    	[{twitterminer_tweets,
-            {twitterminer_tweets, start_link, []},
-            permanent,
-            5000, 
-            worker,
-            [twitterminer_tweets]},
-        {twitterminer_riaksup,
-            {twitterminer_riaksup, start_link, [Server]},  % A = Get list of connections from refServer
+    	[{twitterminer_riaksup,
+            {twitterminer_riaksup, start_link, [Server]}, 
             permanent,
             5000, 
             supervisor,

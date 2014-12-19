@@ -1,3 +1,14 @@
+%% ------------------------------------------------------------------
+%% twitterminer_updatelist is an OTP gen_server that handles the indexing of the 
+%% "available" tags from the aggregated tag data. 
+%% It is built as a gen_server to take advantage of the 
+%% supervision and message handling capabilities as it must not go down.
+%% It requires a map/fold (or map reduce) pattern to obtain all available tags, 
+%% making sure they are unique and reducing them down to a single list
+%% we have not distributed this for the time being as the overall 
+%% architecture and constraints of our hardware are better suited to sequential processing
+%% ------------------------------------------------------------------
+
 -module(twitterminer_updatelist).
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
@@ -26,7 +37,9 @@ start_link(RiakIP) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-%% init the server. Opens a socket to riak and stores the Pid in the state
+%% Establishes connection to riak node on local machine. 
+%% Crashes if no connection can be made and OTP failover kicks in when node fails.
+
 init([RiakIP]) ->
 	io:format("Starting riak conn update list"),
 	try riakc_pb_socket:start_link(RiakIP, 8087) of
@@ -40,8 +53,6 @@ init([RiakIP]) ->
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-%%potential for more efficiency if only the first and last are operated on, maybe using dict:fold. Maybe...
-
 %% Functionality: When the atom tick is recieved from the tickloop, calls 20 minutes of 
 %% data from riak and runs a map then a fold function to reduce this down to a 
 %% single list of available tags
@@ -51,14 +62,17 @@ handle_cast(tick, RiakPID) ->
           RiakPID,
           <<"tags">>, %% bucket name
           {integer_index, "timestamp"}, %% index name
-          oldTimeStamp(), timeStamp() %% origin timestamp should eventually have some logic attached
+          oldTimeStamp(), timeStamp() 
         ) of
 		{ok, {_,Keys,_,_}} ->
 			if 
 				length(Keys) < 20 ->
 					NewKeys = lists:reverse(lists:sort(Keys)),
+					%% Map
 					Objects = lists:map(fun(Key) -> {ok, Obj} = riakc_pb_socket:get(RiakPID, <<"tags">>, Key), Obj end, NewKeys),
-					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), Tags = dict:fetch_keys(Value), gb_sets:union([Alltags, gb_sets:from_list(Tags)]) end, gb_sets:new(), Objects),
+					%%Reduce
+					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), 
+						Tags = dict:fetch_keys(Value), gb_sets:union([Alltags, gb_sets:from_list(Tags)]) end, gb_sets:new(), Objects),
 					TaglistVal = term_to_binary(gb_sets:to_list(Tagset)),
 					case riakc_pb_socket:get(RiakPID, <<"taglistbucket">>, <<"taglist">>) of
 						{ok, OldTaglist} ->			
@@ -71,8 +85,11 @@ handle_cast(tick, RiakPID) ->
 					riakc_pb_socket:put(RiakPID, NewTaglist);
 				true ->
 					{NewKeys,_} = lists:split(20, lists:reverse(lists:sort(Keys))),
+					%% Map
 					Objects = lists:map(fun(Key) -> {ok, Obj} = riakc_pb_socket:get(RiakPID, <<"tags">>, Key), Obj end, NewKeys),
-					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), Tags = dict:fetch_keys(Value), gb_sets:union([Alltags, gb_sets:from_list(Tags)]) end, gb_sets:new(), Objects),
+					%%Reduce
+					Tagset = lists:foldl(fun(Object, Alltags) -> Value = binary_to_term(riakc_obj:get_value(Object)), 
+						Tags = dict:fetch_keys(Value), gb_sets:union([Alltags, gb_sets:from_list(Tags)]) end, gb_sets:new(), Objects),
 					TaglistVal = term_to_binary(gb_sets:to_list(Tagset)),
 					case riakc_pb_socket:get(RiakPID, <<"taglistbucket">>, <<"taglist">>) of
 						{ok, OldTaglist} ->			

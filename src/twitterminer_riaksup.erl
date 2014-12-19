@@ -1,3 +1,9 @@
+%% ------------------------------------------------------------------
+%% twitterminer_riaksup is an OTP supervisor that monitors the more arror prone riak connected
+%% processes in the supervisor tree.  
+%% These processes are registered and should never die (i.e. will be restarted). 
+%% ------------------------------------------------------------------
+
 -module(twitterminer_riaksup).
 
 -behaviour(supervisor).
@@ -25,7 +31,6 @@ start_link(RiakIP) ->
 
 init(RiakIP) ->
 %% Here is where you add any new process to be started at runtime as per the below. 
-%% You can use twitterminer_updatelist as a template
 
     {ok, { {one_for_one, 10, 5000}, 
     	[{twitterminer_riak,

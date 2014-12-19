@@ -47,6 +47,10 @@
 
         $ erl -pa deps/*/ebin -pa ebin -config config/picard -name twitterminer -setcookie tagwars
 
+    Or if on the amazon server - to avoid problems with the VPS. It's internal IP is not accesible externally
+
+        $ erl -pa deps/*/ebin -pa ebin -config config/picard -name twitterminer@ec2-54-171-106-214.eu-west-1.compute.amazonaws.com -setcookie tagwars
+
     Start all needed Erlang applications in the shell
 
     ```erlang
@@ -77,5 +81,5 @@ jiffy is a JSON parser, which uses efficient C code to perform the actual parsin
 
 ### Authors
 
-* Team QI based heavily off [DIT029 Twitter Miner](https://github.com/michalpalka/dit029-twitter-miner) by Michał Pałka (michalpalka) <michal.palka@chalmers.se>
+* Team QI with actual mining portion based heavily off [DIT029 Twitter Miner](https://github.com/michalpalka/dit029-twitter-miner) by Michał Pałka (michalpalka) <michal.palka@chalmers.se>
 

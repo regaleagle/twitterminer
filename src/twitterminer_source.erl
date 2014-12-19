@@ -1,3 +1,13 @@
+%% ------------------------------------------------------------------
+%% twitterminer_source - paired with twitter_pipeline is a modified
+%% version of the original twitterminer example from Michal Palka.
+%% it pushes simple tweet information extracted from the stream to 
+%% the twitterminer_riak server which handles the riak connection and 
+%% the next data preprocessing step
+%% It is supervised in the OTP sense and so failures will crash the 
+%% process and it will be restarted by the supervisor
+%% ------------------------------------------------------------------
+
 -module(twitterminer_source).
 
 %% ------------------------------------------------------------------
@@ -11,6 +21,8 @@
                        access_token, access_token_secret}).
 
 
+%% important: calls back the Pid of the process to the 
+%% supervisor so it can be restarted on crash
 
 start_link() ->
   Pid = spawn_link(fun() -> start() end),
@@ -31,10 +43,6 @@ get_account_keys(Name) ->
                 api_secret=keyfind(api_secret, Keys),
                 access_token=keyfind(access_token, Keys),
                 access_token_secret=keyfind(access_token_secret, Keys)}.
-
-
-
-%% Pushes each tag to to Riak
  
 
 
@@ -195,9 +203,6 @@ parseT([], Tags, Tweet) ->  spawn_link(fun() -> send_on_tags(Tags, Tweet) end);
 parseT([H|T], Tags, Tweet) -> 
   {[{_,Tag},{_,_}]} = H,
   parseT(T, [Tag|Tags], Tweet).
-  % {[{_,Tag},{_,_}]} = H, 
-  % io:format("TAG: ~ts~n", [Tag]), 
-  % parseT(T).
 
 my_print(T) ->
   case T of

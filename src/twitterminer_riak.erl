@@ -26,6 +26,9 @@ start_link(RiakIP) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
+%% Establishes connection to riak node on local machine. 
+%% Crashes if no connection can be made and OTP failover kicks in when node fails.
+
 init([RiakIP]) ->
 	try riakc_pb_socket:start_link(RiakIP, 8087) of
     	{ok, RiakPID} ->

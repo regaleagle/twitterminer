@@ -1,3 +1,8 @@
+%% ------------------------------------------------------------------
+%% twitterminer_tickloop handles the timing of the preprocessing jobs, 
+%% these are processor heavy and so are kept to a non overlapping shedule
+%% ------------------------------------------------------------------
+
 -module(twitterminer_tickloop).
 
 

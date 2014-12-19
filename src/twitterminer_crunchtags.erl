@@ -1,3 +1,12 @@
+
+%% ------------------------------------------------------------------
+%% twitterminer_crunchtags is an OTP gen_server that handles all 
+%% the data preprocessing of the already aggregated tag data. 
+%% It is built as a gen_server to take advantage of the 
+%% supervision and message handling capabilities as it must not go down.
+%% It ensures that future quries for tag distribution data are fast and efficient
+%% ------------------------------------------------------------------
+
 -module(twitterminer_crunchtags).
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
@@ -26,11 +35,13 @@ start_link(RiakIP) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
+%% Establishes connection to riak node on local machine. 
+%% Crashes if no connection can be made and OTP failover kicks in when node fails. 
+
 init([RiakIP]) ->
 	io:format("Starting crunch tags"),
 	try riakc_pb_socket:start_link(RiakIP, 8087) of
     {ok, RiakPID} ->
-    io:format("~s~n", [RiakIP]),
     	{ok, {RiakPID,[]}}
 	
 	catch
@@ -38,44 +49,45 @@ init([RiakIP]) ->
       		exit("no_riak_connection")
   	end.
 
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
+%% receives a trigger from the tick timer function once a minute
 
-%% Pseudo code for twitterminer_crunchtags. Do map and reduce on a continuous timed loop on data that twitterminer_updatelist has gathered. 	
-%% -receive signal (or "tick") in a handle_cast function (look at the existing modules)
 handle_cast(tick, {RiakPID, OldTags}) ->
+  %get current list of available tags
   ListOfTags = case riakc_pb_socket:get(RiakPID, <<"taglistbucket">>, <<"taglist">>) of
     {ok, List} -> 
         FinalTaglist = binary_to_term(riakc_obj:get_value(List)),  
         FinalTaglist;
     Reason -> exit(Reason)
   end,
+
+  % get list of keys up to 40 mins old
   AllKeys = case riakc_pb_socket:get_index_range(
             RiakPID,
             <<"tags">>, %% bucket name
             {integer_index, "timestamp"}, %% index name
-            oldTimeStamp(), timeStamp() %% origin timestamp should eventually have some logic attached
+            oldTimeStamp(), timeStamp()
           ) of
     {ok, {_,TempKeys,_,_}} ->
       Keys = lists:reverse(lists:sort(TempKeys)),
       Keys;
     Reason1 -> exit(Reason1)
   end,
+  
+  %map over the keys for values 
   TagDicts = get_dicts(AllKeys, RiakPID),
+  %map over the tags using the dicts to constuct the processed data and put to riak
   CrunchedTags = lists:map(fun(Tag) -> crunch_tags(Tag, TagDicts) end, ListOfTags),
   put_to_riak(CrunchedTags, RiakPID),
+  %delete old tags to keep directory clean 
+  %(it builds up veeeery quickly as there are a lot of one use tags)
   DeleteTags = gb_sets:to_list(gb_sets:difference(gb_sets:from_list(OldTags), gb_sets:from_list(ListOfTags))),
   lists:foreach(fun(DeleteTag) -> delete(DeleteTag, RiakPID) end, DeleteTags),
   {noreply, {RiakPID, ListOfTags}};
-  
-
-%% Instead of returning a callback for the data server at the end of the function, you put that data structure in riak, as above.
-
-
-%% -wait for next tick. This will happen automatically as you should be using an OTP gen_server. 
 	
+%% Required callbacks
 
-
+handle_call(_Request, _From, State) ->
+    {reply, ok, State}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -93,6 +105,16 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
+
+get_obj(Key, RiakPID) ->
+  {ok, Obj} = riakc_pb_socket:get(RiakPID, <<"tags">>, Key), 
+  Obj.
+
+get_value(Object) ->
+  Value = binary_to_term(riakc_obj:get_value(Object)), 
+  Value.
+
+%% extract the dict structues from the Riak objects
 get_dicts(AllKeys, RiakPID) when length(AllKeys) >= 20 ->
   {NewKeys,_} = lists:split(20, AllKeys),
   Objects = lists:map(fun(Key) ->  get_obj(Key, RiakPID) end, NewKeys),
@@ -110,15 +132,8 @@ get_dicts(AllKeys, RiakPID) when length(AllKeys) >= 2 ->
 get_dicts(_, _) ->
   empty.
 
-get_obj(Key, RiakPID) ->
-  {ok, Obj} = riakc_pb_socket:get(RiakPID, <<"tags">>, Key), 
-  Obj.
-
-get_value(Object) ->
-  Value = binary_to_term(riakc_obj:get_value(Object)), 
-  Value.
-
-
+%% -----------------------------------
+%% convert data from list of dicts to single tag distribution, cotag and tweet JSON structure
 crunch_tags(Tag, empty) -> 
   {Distribution, Cotags}  = {[{[{<<"numtags">>, 0}, {<<"tweets">>, ""}]}],[]},
   Value = jiffy:encode({[{<<"tag">>, Tag},
@@ -150,7 +165,10 @@ loopThrough(Tagset, L, OldCotags) ->
   L2 = [{[{<<"numtags">>, Num + Num2}, {<<"tweets">>, gb_sets:to_list(gb_sets:union([Tweets, Tweets2]))}]}|L],
   NewCotags = gb_sets:union([Cotags, Cotags2, OldCotags]),
   loopThrough(OldKeys, L2, NewCotags).
+%% -----------------------------------
 
+
+%% push to riak database
 put_to_riak([], _) -> ok; 
 put_to_riak([H|T], RiakPid) -> 
   {Tag, Value} = H,
