@@ -86,11 +86,11 @@ handle_cast(tick, {RiakPID, OldTags}) ->
 	
 %% Required callbacks
 
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
-
 handle_cast(_Msg, State) ->
     {noreply, State}.
+
+handle_call(_Request, _From, State) ->
+    {reply, ok, State}.
 
 handle_info(_Info, State) ->
     {noreply, State}.
