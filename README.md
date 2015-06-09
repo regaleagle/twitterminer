@@ -1,6 +1,6 @@
 # Twitterminer
 
-## This is Team QI's Riak twitterminer and data cruncher.
+## This is Team QI's Riak backed twitterminer and data cruncher.
 
 ### Installation
 
